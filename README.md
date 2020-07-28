@@ -91,6 +91,8 @@ First, set your testing Azure Storage Container credentials and then run
 npm test
 ```
 
+I tried using Azurite as the test container, but couldn't make it work (perhaps it was just a matter of more time to research).
+
 # To improve
 As of 2020 July, this library is still evolving. Some of the things that we need to work on:
 
