@@ -12,7 +12,7 @@
   },
   "keywords": [],
   "author": "Juntoz.com",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@azure/storage-blob": "^12.2.0-preview.1"
   },
