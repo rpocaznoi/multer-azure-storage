@@ -1,5 +1,4 @@
 # Introduction
-
 The original idea came from trying to have either an API or a web application to accept a file upload (one or many files) to take the file from the browser to Azure Storage directly.
 
 Typically, the web applications will take the file from the browser, store it in a temporary file in the server, and from there reach the final storage destination.
@@ -33,22 +32,20 @@ First, go to `@koa/multer` and `multer` repos to grasp what they are, and how th
 
 Following, a complete example but divided in sections for better explanation.
 
-This first part shows how to create the custom storage. The `getDestination` delegate is important because it will allow the file to be placed in a designated folder if needed.
+This first part shows how to create the custom storage. The `getDestination` delegate needs to return the Azure Storage container and the final path.
 ```
-const { MulterAzureStorage, AzureStorageOptions } = require('@juntoz/multer-azure-storage');
+const { MulterAzureStorage } = require('@juntoz/multer-azure-storage');
 
 const azs = new MulterAzureStorage({
     getDestination: (r, f) => {
         // use this delegate to change the final path for the file
         return {
-            path: f.originalname
+            accountName: 'your_account_name',
+            accessKey: 'your_accesskey',
+            containerName: 'your_container_name',
+            blobPath: 'myfolder/' + f.originalname
         };
-    },
-    azureOptions: new AzureStorageOptions(
-        '#your account name#',
-        '#your account access key#',
-        '#your container name#',
-    )
+    }
 });
 ```
 Then you need to create the `multer` middleware.
