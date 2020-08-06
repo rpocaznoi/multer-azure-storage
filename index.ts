@@ -1,70 +1,84 @@
 import { BlobServiceClient, StorageSharedKeyCredential, ContainerClient } from "@azure/storage-blob";
-import { Readable } from 'stream';
-import { File, Request, CallbackHandleFile } from './multer-export';
-
-export interface Destination {
-    path: string;
-}
-
-export interface GetDestination {
-    (req: Request, file: File): Destination;
-}
-
-export class Options {
-    azureOptions!: AzureStorageOptions;
-    getDestination!: GetDestination;
-}
-
-export class AzureStorageOptions {
-    constructor(
-        public accountName: string,
-        public accessKey: string,
-        public containerName: string) {
-    }
-
-    get url() {
-        if (this.accountName.indexOf('http') >= 0) {
-            return this.accountName;
-        } else {
-            return `https://${this.accountName}.blob.core.windows.net`;
-        }
-    }
-}
+import { File, CallbackHandleFile, Options, AzureDestination } from './multer-export';
 
 export class MulterAzureStorage {
-    private blobClient: BlobServiceClient;
-    private containerClient: ContainerClient;
+    private clients: any = {};
 
     constructor(private options: Options) {
-        this.blobClient = new BlobServiceClient(
-            this.options.azureOptions.url,
-            new StorageSharedKeyCredential(
-                this.options.azureOptions.accountName,
-                this.options.azureOptions.accessKey)
-        );
-
-        this.containerClient = this.blobClient.getContainerClient(this.options.azureOptions.containerName);
+        this.validateOptions(options);
     }
 
-    _handleFile(req: Request, file: File, cb: CallbackHandleFile) {
-        // convert the file into a final path
-        const dest = this.options.getDestination(req, file);
+    private validateOptions(options: Options) {
+        if (!options.getDestination) {
+            throw new Error('options.getDestination is mandatory');
+        }
+
+        return options;
+    }
+
+    private validateDestination(dest: AzureDestination) {
+        if (!dest.accountName || !dest.accessKey || !dest.containerName) {
+            throw new Error('accountName, accessKey and containerName are required to be returned from getDestination method');
+        }
+
+        if (!dest.blobPath) {
+            throw new Error('path is required to be returned from getDestination method');
+        }
+
+        return dest;
+    }
+
+    private createContainerClient(accountName: string, accessKey: string, containerName: string): ContainerClient {
+        let url = accountName;
+        if (accountName.indexOf('http') < 0) {
+            url = `https://${accountName}.blob.core.windows.net`;
+        }
+
+        const blobClient = new BlobServiceClient(
+            url,
+            new StorageSharedKeyCredential(
+                accountName,
+                accessKey)
+        );
+
+        return blobClient.getContainerClient(containerName);
+    }
+
+    private ensureContainer(accountName: string, accessKey: string, containerName: string): ContainerClient {
+        if (!this.options.reuseConnections) {
+            return this.createContainerClient(accountName, accessKey, containerName);
+        }
+
+        const key = accountName + '-' + containerName;
+        if (!this.clients[key]) {
+            this.clients[key] = this.createContainerClient(accountName, accessKey, containerName);
+        }
+
+        return this.clients[key];
+    }
+
+    _handleFile(req: any, file: File, cb: CallbackHandleFile) {
+        // get the azure storage destination
+        const dest = this.validateDestination(this.options.getDestination(req, file));
+
+        const client = this.ensureContainer(dest.accountName, dest.accessKey, dest.containerName);
 
         // upload stream to the azure storage
-        this.containerClient.getBlockBlobClient(dest.path).uploadStream(file.stream, undefined, undefined, {
+        client.getBlockBlobClient(dest.blobPath).uploadStream(file.stream, undefined, undefined, {
             blobHTTPHeaders: {
                 blobContentType: file.mimetype
             }
         })
-        .then(() => cb(null, { path: dest.path, size: file.size }))
+        .then(() => cb(null, { ...dest, size: file.size, mimetype: file.mimetype }))
         .catch(cb);
     }
 
-    _removeFile(req: Request, file: File, cb: CallbackHandleFile) {
-        // convert the file into a final path
-        const dest = this.options.getDestination(req, file);
+    _removeFile(req: any, file: File, cb: CallbackHandleFile) {
+        // get the azure storage destination
+        const dest = this.validateDestination(this.options.getDestination(req, file));
 
-        this.containerClient.deleteBlob(dest.path)
+        const client = this.ensureContainer(dest.accountName, dest.accessKey, dest.containerName);
+        client.deleteBlob(dest.blobPath)
             .then((res) => cb(null, 'ok'))
             .catch(cb);
     }

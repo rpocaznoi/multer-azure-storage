@@ -4,6 +4,22 @@
 
 import { Readable } from 'stream';
 
+export interface AzureDestination {
+    accountName: string;
+    accessKey: string;
+    containerName: string;
+    blobPath: string;
+}
+
+export interface GetDestination {
+    (req: any, file: File): AzureDestination;
+}
+
+export interface Options {
+    reuseConnections: true,
+    getDestination: GetDestination;
+}
+
 export interface File {
     /** Name of the form field associated with this file. */
     fieldname: string;
@@ -20,21 +36,9 @@ export interface File {
     stream: Readable;
 }
 
-export interface Request {
-    /** `Multer.File` object populated by `single()` middleware. */
-    file: File;
-    /**
-     * Array or dictionary of `Multer.File` object populated by `array()`,
-     * `fields()`, and `any()` middleware.
-     */
-    files: {
-        [fieldname: string]: File[];
-    } | File[];
-}
-
-export interface CallbackHandleFileOutput {
-    path: string;
+export interface CallbackHandleFileOutput extends AzureDestination {
     size?: number;
+    mimetype?: string;
 }
 
 export interface CallbackHandleFile {

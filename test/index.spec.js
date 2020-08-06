@@ -8,14 +8,12 @@ describe('multer azure storage', () => {
         const azs = new MulterAzureStorage({
             getDestination: (r, f) => {
                 return {
-                    path: 'dummy/' + f.originalname
+                    accountName: 'your_account_name',
+                    accessKey: 'your_accesskey',
+                    containerName: 'your_container_name',
+                    blobPath: 'dummy/' + f.originalname
                 };
             },
-            azureOptions: new AzureStorageOptions(
-                'your_accountname',
-                'your_accesskey',
-                'your_container_name',
-            )
         });
 
         const app = new Koa();
