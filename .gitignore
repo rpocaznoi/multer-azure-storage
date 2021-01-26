@@ -5,4 +5,5 @@ out
 __azurite*
 __blobstorage__
 package-lock.json
+yarn.lock
 *.tgz

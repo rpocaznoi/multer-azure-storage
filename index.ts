@@ -1,4 +1,4 @@
-import { BlobServiceClient, StorageSharedKeyCredential, ContainerClient } from "@azure/storage-blob";
+import { BlobServiceClient, ContainerClient } from "@azure/storage-blob";
 import { File, CallbackHandleFile, Options, AzureDestination } from './multer-export';
 
 export class MulterAzureStorage {
@@ -17,8 +17,8 @@ export class MulterAzureStorage {
     }
 
     private validateDestination(dest: AzureDestination) {
-        if (!dest.accountName || !dest.accessKey || !dest.containerName) {
-            throw new Error('accountName, accessKey and containerName are required to be returned from getDestination method');
+        if (!dest.connectionString || !dest.containerName) {
+            throw new Error('connectionString and containerName are required to be returned from getDestination method');
         }
 
         if (!dest.blobPath) {
@@ -28,30 +28,22 @@ export class MulterAzureStorage {
         return dest;
     }
 
-    private createContainerClient(accountName: string, accessKey: string, containerName: string): ContainerClient {
-        let url = accountName;
-        if (accountName.indexOf('http') < 0) {
-            url = `https://${accountName}.blob.core.windows.net`;
-        }
+    private createContainerClient(connectionString: string, containerName: string): ContainerClient {
 
-        const blobClient = new BlobServiceClient(
-            url,
-            new StorageSharedKeyCredential(
-                accountName,
-                accessKey)
-        );
+        const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+        const containerClient = blobServiceClient.getContainerClient(containerName);
 
-        return blobClient.getContainerClient(containerName);
+        return containerClient;
     }
 
-    private ensureContainer(accountName: string, accessKey: string, containerName: string): ContainerClient {
+    private ensureContainer(connectionString: string,  containerName: string): ContainerClient {
         if (!this.options.reuseConnections) {
-            return this.createContainerClient(accountName, accessKey, containerName);
+            return this.createContainerClient(connectionString, containerName);
         }
 
-        const key = accountName + '-' + containerName;
+        const key = connectionString + '-' + containerName;
         if (!this.clients[key]) {
-            this.clients[key] = this.createContainerClient(accountName, accessKey, containerName);
+            this.clients[key] = this.createContainerClient(connectionString, containerName);
         }
 
         return this.clients[key];
@@ -61,7 +53,7 @@ export class MulterAzureStorage {
         // get the azure storage destination
         const dest = this.validateDestination(this.options.getDestination(req, file));
 
-        const client = this.ensureContainer(dest.accountName, dest.accessKey, dest.containerName);
+        const client = this.ensureContainer(dest.connectionString, dest.containerName);
 
         // upload stream to the azure storage
         client.getBlockBlobClient(dest.blobPath).uploadStream(file.stream, undefined, undefined, {
@@ -77,7 +69,7 @@ export class MulterAzureStorage {
         // get the azure storage destination
         const dest = this.validateDestination(this.options.getDestination(req, file));
 
-        const client = this.ensureContainer(dest.accountName, dest.accessKey, dest.containerName);
+        const client = this.ensureContainer(dest.connectionString, dest.containerName);
         client.deleteBlob(dest.blobPath)
             .then((res) => cb(null, 'ok'))
             .catch(cb);

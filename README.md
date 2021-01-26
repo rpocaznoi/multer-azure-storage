@@ -40,8 +40,7 @@ const azs = new MulterAzureStorage({
     getDestination: (r, f) => {
         // use this delegate to change the final path for the file
         return {
-            accountName: 'your_account_name',
-            accessKey: 'your_accesskey',
+            conectionString: 'your_conection_string',
             containerName: 'your_container_name',
             blobPath: 'myfolder/' + f.originalname
         };

@@ -5,8 +5,7 @@
 import { Readable } from 'stream';
 
 export interface AzureDestination {
-    accountName: string;
-    accessKey: string;
+    connectionString: string;
     containerName: string;
     blobPath: string;
 }

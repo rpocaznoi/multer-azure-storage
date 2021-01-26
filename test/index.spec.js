@@ -8,8 +8,7 @@ describe('multer azure storage', () => {
         const azs = new MulterAzureStorage({
             getDestination: (r, f) => {
                 return {
-                    accountName: 'your_account_name',
-                    accessKey: 'your_accesskey',
+                    connectionString: 'your_connection_string',
                     containerName: 'your_container_name',
                     blobPath: 'dummy/' + f.originalname
                 };
