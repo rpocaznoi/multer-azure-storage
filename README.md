@@ -34,7 +34,7 @@ Following, a complete example but divided in sections for better explanation.
 
 This first part shows how to create the custom storage. The `getDestination` delegate needs to return the Azure Storage container and the final path.
 ```
-const { MulterAzureStorage } = require('@juntoz/multer-azure-storage');
+const { MulterAzureStorage } = require('@rpocaznoi/multer-azure-storage');
 
 const azs = new MulterAzureStorage({
     getDestination: (r, f) => {
