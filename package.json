@@ -1,6 +1,6 @@
 {
   "name": "@rpocaznoi/multer-azure-storage",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Custom multer storage with Azure Storage",
   "main": "dist/index.js",
   "private": false,
@@ -16,8 +16,8 @@
   "license": "MIT",
   "dependencies": {
     "@azure/storage-blob": "^12.4.0"
-},
-"devDependencies": {
+  },
+  "devDependencies": {
     "@koa/multer": "^3.0.0",
     "@koa/router": "^10.0.0",
     "@types/jest": "^26.0.20",
