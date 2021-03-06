@@ -1,6 +1,6 @@
 {
   "name": "@rpocaznoi/multer-azure-storage",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Custom multer storage with Azure Storage",
   "main": "dist/index.js",
   "private": false,
